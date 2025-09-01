@@ -1,0 +1,23 @@
+{
+  "name": "com.ugf.gameframework.ui",
+  "version": "1.0.0",
+  "displayName": "UGF.GameFramework.UI",
+  "description": "Unity GameFramework UI extension package with component binding, data integration and code generation tools.",
+  "unity": "2022.3",
+  "unityRelease": "0f1",
+  "dependencies": {
+    "com.ugf.gameframework": "1.0.0",
+    "com.ugf.gameframework.data": "1.0.0"
+  },
+  "keywords": [
+    "ugf",
+    "gameframework",
+    "ui",
+    "binding",
+    "codegen"
+  ],
+  "author": {
+    "name": "UGF"
+  },
+  "type": "library"
+}
