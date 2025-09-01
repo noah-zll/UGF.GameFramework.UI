@@ -61,11 +61,175 @@ namespace UGF.GameFramework.UI.Editor
                 return false;
                 
             // 只对UI相关组件显示菜单
-            return component is RectTransform || 
-                   component is Canvas || 
-                   component is CanvasGroup ||
-                   component is Graphic ||
-                   component is Selectable;
+            return IsUIRelatedComponent(component);
+        }
+        
+        /// <summary>
+        /// 添加到UIDesigner菜单项
+        /// </summary>
+        [MenuItem("CONTEXT/Component/添加到 UIDesigner")]
+        private static void AddToUIDesigner(MenuCommand command)
+        {
+            Component component = command.context as Component;
+            if (component == null) return;
+            
+            // 为当前组件添加UIComponentBinder
+            UIComponentBinder binder = component.gameObject.GetComponent<UIComponentBinder>();
+            if (binder == null)
+            {
+                binder = component.gameObject.AddComponent<UIComponentBinder>();
+                // 设置绑定的组件类型
+                binder.ComponentTypeName = component.GetType().Name;
+                binder.BindEvents = ShouldBindEvents(component);
+            }
+            
+            // 查找父级的UIDesigner
+            UIDesigner designer = FindUIDesignerInParents(component.transform);
+            if (designer == null)
+            {
+                Debug.LogWarning($"未找到父级UIDesigner组件，无法添加组件绑定: {component.name}");
+                return;
+            }
+            
+            // 创建组件绑定并添加到UIDesigner
+            UIComponentBinding binding = new UIComponentBinding
+            {
+                ComponentName = GenerateVariableName(component),
+                Component = component,
+                ComponentType = component.GetType().Name
+            };
+            
+            designer.AddComponentBinding(binding);
+            
+            // 标记为已修改
+            UnityEditor.EditorUtility.SetDirty(designer);
+            
+            Debug.Log($"已将组件 {component.name} 添加到UIDesigner: {designer.name}");
+        }
+        
+        /// <summary>
+        /// 验证是否可以添加到UIDesigner
+        /// </summary>
+        [MenuItem("CONTEXT/Component/添加到 UIDesigner", true)]
+        private static bool ValidateAddToUIDesigner(MenuCommand command)
+        {
+            Component component = command.context as Component;
+            if (component == null) return false;
+            
+            // 检查是否是UI组件
+            if (!IsUIRelatedComponent(component)) return false;
+            
+            // 检查是否能找到父级UIDesigner
+            UIDesigner designer = FindUIDesignerInParents(component.transform);
+            return designer != null;
+        }
+        
+        /// <summary>
+        /// 检查是否是UI相关组件
+        /// </summary>
+        private static bool IsUIRelatedComponent(Component component)
+        {
+            // 基础UI组件
+            if (component is RectTransform || 
+                component is Canvas || 
+                component is CanvasGroup ||
+                component is Graphic ||
+                component is Selectable)
+                return true;
+            
+            // UGUI组件
+            if (component is UnityEngine.UI.Button ||
+                component is UnityEngine.UI.Text ||
+                component is UnityEngine.UI.Image ||
+                component is UnityEngine.UI.RawImage ||
+                component is UnityEngine.UI.InputField ||
+                component is UnityEngine.UI.Toggle ||
+                component is UnityEngine.UI.Slider ||
+                component is UnityEngine.UI.Scrollbar ||
+                component is UnityEngine.UI.Dropdown ||
+                component is UnityEngine.UI.ScrollRect ||
+                component is UnityEngine.UI.Mask ||
+                component is UnityEngine.UI.RectMask2D)
+                return true;
+            
+            // TextMeshPro组件
+            if (component.GetType().Name == "TextMeshProUGUI" ||
+                component.GetType().Name == "TextMeshPro" ||
+                component.GetType().Name == "TMP_Text" ||
+                component.GetType().Name == "TMP_InputField" ||
+                component.GetType().Name == "TMP_Dropdown")
+                return true;
+            
+            // Layout组件
+            if (component is UnityEngine.UI.LayoutElement ||
+                component is UnityEngine.UI.ContentSizeFitter ||
+                component is UnityEngine.UI.AspectRatioFitter ||
+                component is UnityEngine.UI.HorizontalLayoutGroup ||
+                component is UnityEngine.UI.VerticalLayoutGroup ||
+                component is UnityEngine.UI.GridLayoutGroup)
+                return true;
+            
+            // 检查是否在Canvas下
+            Transform current = component.transform;
+            while (current != null)
+            {
+                if (current.GetComponent<Canvas>() != null)
+                    return true;
+                current = current.parent;
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// 在父级中查找UIDesigner组件
+        /// </summary>
+        private static UIDesigner FindUIDesignerInParents(Transform transform)
+        {
+            Transform current = transform;
+            while (current != null)
+            {
+                UIDesigner designer = current.GetComponent<UIDesigner>();
+                if (designer != null)
+                    return designer;
+                current = current.parent;
+            }
+            return null;
+        }
+        
+        /// <summary>
+        /// 生成变量名
+        /// </summary>
+        private static string GenerateVariableName(Component component)
+        {
+            string baseName = component.name;
+            string typeName = component.GetType().Name;
+            
+            // 移除常见的UI前缀
+            if (baseName.StartsWith("UI"))
+                baseName = baseName.Substring(2);
+            
+            // 确保首字母小写
+            if (!string.IsNullOrEmpty(baseName))
+                baseName = char.ToLower(baseName[0]) + baseName.Substring(1);
+            
+            // 添加类型后缀（如果还没有的话）
+            if (!baseName.EndsWith(typeName, System.StringComparison.OrdinalIgnoreCase))
+                baseName += typeName;
+            
+            return baseName;
+        }
+        
+        /// <summary>
+        /// 判断是否应该绑定事件
+        /// </summary>
+        private static bool ShouldBindEvents(Component component)
+        {
+            return component is UnityEngine.UI.Button ||
+                   component is UnityEngine.UI.Toggle ||
+                   component is UnityEngine.UI.Slider ||
+                   component is UnityEngine.UI.InputField ||
+                   component is UnityEngine.UI.Dropdown;
         }
         
         /// <summary>
