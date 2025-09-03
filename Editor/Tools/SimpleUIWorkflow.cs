@@ -384,8 +384,19 @@ namespace UGF.GameFramework.UI.Editor
                     int insertPos = FindLastMethodEnd(content);
                     if (insertPos != -1)
                     {
-                        string newMethod = $"\n    /// <summary>\n    /// {binding.ComponentName} 按钮点击事件\n    /// </summary>\n    private void {methodName}()\n    {{\n        Debug.Log(\"点击了 {binding.ComponentName}\");\n        // TODO: 实现 {binding.ComponentName} 按钮点击逻辑\n    }}\n";
-                        sb.Insert(insertPos, newMethod);
+                        var methodBuilder = new System.Text.StringBuilder();
+                        methodBuilder.AppendLine();
+                        methodBuilder.AppendLine();
+                        methodBuilder.AppendLine("        /// <summary>");
+                        methodBuilder.AppendLine($"        /// {binding.ComponentName} 按钮点击事件");
+                        methodBuilder.AppendLine("        /// </summary>");
+                        methodBuilder.AppendLine($"        private void {methodName}()");
+                        methodBuilder.AppendLine("        {");
+                        methodBuilder.AppendLine($"            Debug.Log(\"点击了 {binding.ComponentName}\");");
+                        methodBuilder.AppendLine($"            // TODO: 实现 {binding.ComponentName} 按钮点击逻辑");
+                        methodBuilder.AppendLine("        }");
+                        
+                        sb.Insert(insertPos, methodBuilder.ToString());
                     }
                 }
             }
@@ -398,12 +409,28 @@ namespace UGF.GameFramework.UI.Editor
         /// </summary>
         private static int FindLastMethodEnd(string content)
         {
-            // 查找类的结束大括号之前的位置
-            int lastBrace = content.LastIndexOf('}');
-            if (lastBrace != -1)
+            // 查找类的结束大括号，而不是命名空间的结束大括号
+            // 从后往前查找，找到倒数第二个大括号（第一个是命名空间的，第二个是类的）
+            int braceCount = 0;
+            int classEndPos = -1;
+            
+            for (int i = content.Length - 1; i >= 0; i--)
             {
-                // 向前查找，跳过空白字符
-                for (int i = lastBrace - 1; i >= 0; i--)
+                if (content[i] == '}')
+                {
+                    braceCount++;
+                    if (braceCount == 2) // 找到类的结束大括号
+                    {
+                        classEndPos = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (classEndPos != -1)
+            {
+                // 向前查找，跳过空白字符，找到插入位置
+                for (int i = classEndPos - 1; i >= 0; i--)
                 {
                     if (!char.IsWhiteSpace(content[i]))
                     {
@@ -411,6 +438,7 @@ namespace UGF.GameFramework.UI.Editor
                     }
                 }
             }
+            
             return -1;
         }
         
