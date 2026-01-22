@@ -269,19 +269,19 @@ namespace UGF.GameFramework.UI.Editor
             }
             
             // 获取输出目录
-            string outputDirectory = GetOutputDirectory(designer);
-            if (!Directory.Exists(outputDirectory))
-            {
-                Directory.CreateDirectory(outputDirectory);
-            }
+            string bindingDirectory = GetBindingOutputDirectory();
+            string logicDirectory = GetLogicOutputDirectory();
+
+            if (!Directory.Exists(bindingDirectory)) Directory.CreateDirectory(bindingDirectory);
+            if (!Directory.Exists(logicDirectory)) Directory.CreateDirectory(logicDirectory);
             
             // 生成绑定类
             string bindingCode = GenerateBindingClass(designer.UIFormName, designer.NamespaceName, designer.ComponentBindings);
-            string bindingFilePath = Path.Combine(outputDirectory, $"{designer.UIFormName}.Generated.cs");
+            string bindingFilePath = Path.Combine(bindingDirectory, $"{designer.UIFormName}.Generated.cs");
             File.WriteAllText(bindingFilePath, bindingCode);
             
             // 生成或更新业务逻辑类
-            string logicFilePath = Path.Combine(outputDirectory, $"{designer.UIFormName}.cs");
+            string logicFilePath = Path.Combine(logicDirectory, $"{designer.UIFormName}.cs");
             if (!File.Exists(logicFilePath))
             {
                 // 文件不存在时创建新文件
@@ -364,19 +364,19 @@ namespace UGF.GameFramework.UI.Editor
             }
             
             // 获取输出目录
-            string outputDirectory = GetOutputDirectory(designer);
-            if (!Directory.Exists(outputDirectory))
-            {
-                Directory.CreateDirectory(outputDirectory);
-            }
+            string bindingDirectory = GetBindingOutputDirectory();
+            string logicDirectory = GetLogicOutputDirectory();
+
+            if (!Directory.Exists(bindingDirectory)) Directory.CreateDirectory(bindingDirectory);
+            if (!Directory.Exists(logicDirectory)) Directory.CreateDirectory(logicDirectory);
             
             // 生成绑定类
             string bindingCode = GenerateBindingClass(designer.UIFormName, designer.NamespaceName, designer.ComponentBindings);
-            string bindingFilePath = Path.Combine(outputDirectory, $"{designer.UIFormName}.Generated.cs");
+            string bindingFilePath = Path.Combine(bindingDirectory, $"{designer.UIFormName}.Generated.cs");
             File.WriteAllText(bindingFilePath, bindingCode);
             
             // 生成或更新业务逻辑类
-            string logicFilePath = Path.Combine(outputDirectory, $"{designer.UIFormName}.cs");
+            string logicFilePath = Path.Combine(logicDirectory, $"{designer.UIFormName}.cs");
             if (!File.Exists(logicFilePath))
             {
                 // 文件不存在时创建新文件
@@ -736,19 +736,10 @@ namespace UGF.GameFramework.UI.Editor
         /// </summary>
         private static string GetPrefabOutputPath(UIDesigner designer)
         {
-            // 获取脚本输出目录的父目录作为Prefab目录
-            string scriptDirectory = GetOutputDirectory(designer);
-            string assetsRelativePath = scriptDirectory.Replace(Application.dataPath, "Assets");
-            string prefabDirectory = Path.GetDirectoryName(assetsRelativePath);
-            
-            // 确保Prefab目录存在
-            string fullPrefabDirectory = Path.Combine(Application.dataPath.Replace("Assets", ""), prefabDirectory);
-            if (!Directory.Exists(fullPrefabDirectory))
-            {
-                Directory.CreateDirectory(fullPrefabDirectory);
-            }
-            
-            return Path.Combine(prefabDirectory, $"{designer.UIFormName}.prefab").Replace("\\", "/");
+            string path = UIDesignerSettings.Instance.defaultPrefabPath;
+            string fullPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), path);
+            if (!Directory.Exists(fullPath)) Directory.CreateDirectory(fullPath);
+            return Path.Combine(path, $"{designer.UIFormName}.prefab").Replace("\\", "/");
         }
         
         /// <summary>
@@ -756,19 +747,10 @@ namespace UGF.GameFramework.UI.Editor
         /// </summary>
         private static string GetPrefabOutputPath(UIDesignerData designerData)
         {
-            // 获取脚本输出目录的父目录作为Prefab目录
-            string scriptDirectory = GetOutputDirectory(designerData);
-            string assetsRelativePath = scriptDirectory.Replace(Application.dataPath, "Assets");
-            string prefabDirectory = Path.GetDirectoryName(assetsRelativePath);
-            
-            // 确保Prefab目录存在
-            string fullPrefabDirectory = Path.Combine(Application.dataPath.Replace("Assets", ""), prefabDirectory);
-            if (!Directory.Exists(fullPrefabDirectory))
-            {
-                Directory.CreateDirectory(fullPrefabDirectory);
-            }
-            
-            return Path.Combine(prefabDirectory, $"{designerData.uiFormName}.prefab").Replace("\\", "/");
+            string path = UIDesignerSettings.Instance.defaultPrefabPath;
+            string fullPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), path);
+            if (!Directory.Exists(fullPath)) Directory.CreateDirectory(fullPath);
+            return Path.Combine(path, $"{designerData.uiFormName}.prefab").Replace("\\", "/");
         }
         
         /// <summary>
@@ -855,21 +837,23 @@ namespace UGF.GameFramework.UI.Editor
         }
         
         /// <summary>
-        /// 获取输出目录
+        /// 获取绑定代码输出目录
         /// </summary>
-        private static string GetOutputDirectory(UIDesigner designer)
+        private static string GetBindingOutputDirectory()
         {
-            // 统一使用默认路径，避免因预制体状态变化导致路径不一致
-            return Path.Combine(Application.dataPath, "Scripts", "UI", "Generated");
+            string path = UIDesignerSettings.Instance.bindingGeneratePath;
+            if (string.IsNullOrEmpty(path)) path = UIDesignerSettings.Instance.defaultGeneratePath;
+            return Path.Combine(Path.GetDirectoryName(Application.dataPath), path);
         }
-        
+
         /// <summary>
-        /// 获取输出目录（UIDesignerData版本）
+        /// 获取业务逻辑代码输出目录
         /// </summary>
-        private static string GetOutputDirectory(UIDesignerData designerData)
+        private static string GetLogicOutputDirectory()
         {
-            // 统一使用默认路径，避免因预制体状态变化导致路径不一致
-            return Path.Combine(Application.dataPath, "Scripts", "UI", "Generated");
+            string path = UIDesignerSettings.Instance.logicGeneratePath;
+            if (string.IsNullOrEmpty(path)) path = UIDesignerSettings.Instance.defaultGeneratePath;
+            return Path.Combine(Path.GetDirectoryName(Application.dataPath), path);
         }
         
         /// <summary>

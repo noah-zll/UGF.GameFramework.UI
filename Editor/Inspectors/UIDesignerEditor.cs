@@ -98,9 +98,13 @@ namespace UGF.GameFramework.UI.Editor
             // 使用固定的输出目录路径检测文件是否存在
             try
             {
-                string outputDirectory = System.IO.Path.Combine(Application.dataPath, "Scripts", "UI", "Generated");
-                string bindingFilePath = System.IO.Path.Combine(outputDirectory, $"{designer.UIFormName}.Generated.cs");
-                string logicFilePath = System.IO.Path.Combine(outputDirectory, $"{designer.UIFormName}.cs");
+                var settings = UIDesignerSettings.Instance;
+                string projectPath = System.IO.Path.GetDirectoryName(Application.dataPath);
+                string bindingDirectory = System.IO.Path.Combine(projectPath, settings.bindingGeneratePath);
+                string logicDirectory = System.IO.Path.Combine(projectPath, settings.logicGeneratePath);
+                
+                string bindingFilePath = System.IO.Path.Combine(bindingDirectory, $"{designer.UIFormName}.Generated.cs");
+                string logicFilePath = System.IO.Path.Combine(logicDirectory, $"{designer.UIFormName}.cs");
                 
                 bool bindingExists = System.IO.File.Exists(bindingFilePath);
                 bool logicExists = System.IO.File.Exists(logicFilePath);
@@ -851,7 +855,7 @@ namespace UGF.GameFramework.UI.Editor
         /// </summary>
         private string GeneratePrefabPath(string uiFormName)
         {
-            string prefabDirectory = "Assets/GameMain/UI/UIForms";
+            string prefabDirectory = UIDesignerSettings.Instance.defaultPrefabPath;
             if (!System.IO.Directory.Exists(prefabDirectory))
             {
                 System.IO.Directory.CreateDirectory(prefabDirectory);
@@ -1086,7 +1090,8 @@ namespace UGF.GameFramework.UI.Editor
             else
             {
                 // 如果不是Prefab，则保存为新Prefab
-                string prefabPath = $"Assets/UI/Prefabs/{uiFormName}.prefab";
+                string prefabDirectory = UIDesignerSettings.Instance.defaultPrefabPath;
+                string prefabPath = $"{prefabDirectory}/{uiFormName}.prefab";
                 
                 // 确保目录存在
                 string directory = System.IO.Path.GetDirectoryName(prefabPath);

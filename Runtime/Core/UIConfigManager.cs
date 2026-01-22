@@ -141,6 +141,7 @@ namespace UGF.GameFramework.UI
             }
             
             m_UIGroupConfigs[config.GroupName] = config;
+            GameEntry.GetComponent<UIComponent>().AddUIGroup(config.GroupName, config.Depth);
         }
         
         /// <summary>

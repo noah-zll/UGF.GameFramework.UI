@@ -23,10 +23,7 @@ namespace UGF.GameFramework.UI.Editor
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = LoadOrCreateSettings();
-                }
+                if (_instance == null) LoadOrCreateSettings();
                 return _instance;
             }
         }
@@ -41,6 +38,12 @@ namespace UGF.GameFramework.UI.Editor
         
         [Tooltip("默认生成路径")]
         public string defaultGeneratePath = "Assets/Scripts/UI/Generated";
+
+        [Tooltip("业务逻辑代码生成路径")]
+        public string logicGeneratePath = "Assets/Scripts/UI/Logic";
+
+        [Tooltip("绑定代码生成路径")]
+        public string bindingGeneratePath = "Assets/Scripts/UI/Generated";
         
         [Tooltip("默认Prefab路径")]
         public string defaultPrefabPath = "Assets/Prefabs/UI";
@@ -109,33 +112,69 @@ namespace UGF.GameFramework.UI.Editor
         /// <summary>
         /// 加载或创建设置
         /// </summary>
-        private static UIDesignerSettings LoadOrCreateSettings()
+        private static void LoadOrCreateSettings()
         {
-            string settingsPath = "Assets/Editor/UIDesignerSettings.asset";
-            
-            // 尝试加载现有设置
-            UIDesignerSettings settings = AssetDatabase.LoadAssetAtPath<UIDesignerSettings>(settingsPath);
-            
-            if (settings == null)
+            LoadSettings();
+            if (_instance == null) CreateDefaultSettings();
+        }
+
+        /// <summary>
+        /// 加载设置
+        /// </summary>
+        /// <returns>是否成功加载设置</returns>
+        private static void LoadSettings()
+        {
+            _instance = Resources.Load<UIDesignerSettings>("UIDesignerSettings");
+#if UNITY_EDITOR
+            if (_instance == null)
             {
-                // 创建新设置
-                settings = CreateInstance<UIDesignerSettings>();
-                
-                // 确保目录存在
-                string directory = Path.GetDirectoryName(settingsPath);
-                if (!Directory.Exists(directory))
+                string[] guids = AssetDatabase.FindAssets("t:UIDesignerSettings");
+                if (guids.Length > 0)
                 {
-                    Directory.CreateDirectory(directory);
+                    string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                    _instance = AssetDatabase.LoadAssetAtPath<UIDesignerSettings>(path);
                 }
-                
-                // 保存设置
-                AssetDatabase.CreateAsset(settings, settingsPath);
-                AssetDatabase.SaveAssets();
-                
-                Debug.Log($"[UIDesignerSettings] 创建新的设置文件: {settingsPath}");
             }
+#endif
+        }
+
+        private static void CreateDefaultSettings()
+        {
+            _instance = CreateInstance<UIDesignerSettings>();
             
-            return settings;
+            // 设置默认值
+            _instance.defaultNamespace = "UGF.GameFramework.UI";
+            _instance.defaultGeneratePath = "Assets/Scripts/UI/Generated";
+            _instance.logicGeneratePath = "Assets/Scripts/UI/Logic";
+            _instance.bindingGeneratePath = "Assets/Scripts/UI/Generated";
+            _instance.defaultPrefabPath = "Assets/Prefabs/UI";
+            _instance.autoCreateDirectories = true;
+            _instance.generateDetailedComments = true;
+            _instance.useRegionMarkers = true;
+            
+            // 编译设置和部分Prefab设置已移除
+            _instance.refreshAssetsAfterSave = true;
+            _instance.autoSelectGeneratedPrefab = true;
+            
+            // 进度窗口设置已移除
+            _instance.showDetailedLogs = true;
+            _instance.showCompletionNotification = true;
+            _instance.errorDialogTimeout = 0f;
+            
+            _instance.debugMode = false;
+            _instance.backupOriginalFiles = false;
+            _instance.backupRetentionDays = 7;
+            _instance.validateGeneratedCode = true;
+
+            // 确保目录存在
+            string settingsDir = "Assets/Settings/UGF";
+            if (!Directory.Exists(settingsDir))
+                Directory.CreateDirectory(settingsDir);
+                
+            string settingsPath = Path.Combine(settingsDir, "UIDesignerSettings.asset");
+            AssetDatabase.CreateAsset(_instance, settingsPath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
         
         /// <summary>
@@ -145,6 +184,8 @@ namespace UGF.GameFramework.UI.Editor
         {
             defaultNamespace = "UGF.GameFramework.UI";
             defaultGeneratePath = "Assets/Scripts/UI/Generated";
+            logicGeneratePath = "Assets/Scripts/UI/Logic";
+            bindingGeneratePath = "Assets/Scripts/UI/Generated";
             defaultPrefabPath = "Assets/Prefabs/UI";
             autoCreateDirectories = true;
             generateDetailedComments = true;

@@ -57,7 +57,7 @@ namespace UGF.GameFramework.UI.Editor
         /// <summary>
         /// 生成当前选中UIDesigner的代码
         /// </summary>
-        [MenuItem("Tools/UI Designer/Generate Code for Selected")]
+        [MenuItem("UGF/GameFramework/UI Designer/Generate Code for Selected")]
         public static void GenerateCodeForSelected()
         {
             UIDesigner designer = GetSelectedUIDesigner();
@@ -82,7 +82,7 @@ namespace UGF.GameFramework.UI.Editor
         /// <summary>
         /// 验证生成代码菜单项是否可用
         /// </summary>
-        [MenuItem("Tools/UI Designer/Generate Code for Selected", true)]
+        [MenuItem("UGF/GameFramework/UI Designer/Generate Code for Selected", true)]
         public static bool ValidateGenerateCodeForSelected()
         {
             return GetSelectedUIDesigner() != null;
@@ -91,7 +91,7 @@ namespace UGF.GameFramework.UI.Editor
         /// <summary>
         /// 生成场景中所有UIDesigner的代码
         /// </summary>
-        [MenuItem("Tools/UI Designer/Generate All Code in Scene")]
+        [MenuItem("UGF/GameFramework/UI Designer/Generate All Code in Scene")]
         public static void GenerateAllCodeInScene()
         {
             UIDesigner[] designers = Object.FindObjectsOfType<UIDesigner>();
@@ -131,7 +131,7 @@ namespace UGF.GameFramework.UI.Editor
         /// <summary>
         /// 生成项目中所有UIDesigner的代码
         /// </summary>
-        [MenuItem("Tools/UI Designer/Generate All Code in Project")]
+        [MenuItem("UGF/GameFramework/UI Designer/Generate All Code in Project")]
         public static void GenerateAllCodeInProject()
         {
             // 查找项目中所有的预制体
@@ -183,7 +183,7 @@ namespace UGF.GameFramework.UI.Editor
         /// <summary>
         /// 清理生成的代码文件
         /// </summary>
-        [MenuItem("Tools/UI Designer/Clean Generated Code")]
+        [MenuItem("UGF/GameFramework/UI Designer/Clean Generated Code")]
         public static void CleanGeneratedCode()
         {
             bool confirmed = EditorUtility.DisplayDialog(
@@ -219,7 +219,7 @@ namespace UGF.GameFramework.UI.Editor
         /// <summary>
         /// 打开UIDesigner文档
         /// </summary>
-        [MenuItem("Tools/UI Designer/Open Documentation")]
+        [MenuItem("UGF/GameFramework/UI Designer/Open Documentation")]
         public static void OpenDocumentation()
         {
             string docPath = "Assets/UGF.GameFramework.UI/Documentation/UIDesigner_README.md";

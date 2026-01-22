@@ -32,19 +32,28 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.Log($"[SimpleUIWorkflow] 开始生成代码: {designer.UIFormName}");
                 
                 // 获取输出目录
-                string outputDirectory = GetOutputDirectory();
-                if (!Directory.Exists(outputDirectory))
+                string projectPath = Path.GetDirectoryName(Application.dataPath);
+                var settings = UIDesignerSettings.Instance;
+                
+                string bindingDirectory = Path.Combine(projectPath, settings.bindingGeneratePath);
+                if (!Directory.Exists(bindingDirectory))
                 {
-                    Directory.CreateDirectory(outputDirectory);
+                    Directory.CreateDirectory(bindingDirectory);
+                }
+
+                string logicDirectory = Path.Combine(projectPath, settings.logicGeneratePath);
+                if (!Directory.Exists(logicDirectory))
+                {
+                    Directory.CreateDirectory(logicDirectory);
                 }
                 
                 // 生成绑定类
                 string bindingCode = GenerateBindingClass(designer);
-                string bindingFilePath = Path.Combine(outputDirectory, $"{designer.UIFormName}.Generated.cs");
+                string bindingFilePath = Path.Combine(bindingDirectory, $"{designer.UIFormName}.Generated.cs");
                 File.WriteAllText(bindingFilePath, bindingCode);
                 
                 // 生成或更新业务逻辑类
-                string logicFilePath = Path.Combine(outputDirectory, $"{designer.UIFormName}.cs");
+                string logicFilePath = Path.Combine(logicDirectory, $"{designer.UIFormName}.cs");
                 if (!File.Exists(logicFilePath))
                 {
                     // 文件不存在时创建新文件
@@ -591,7 +600,9 @@ namespace UGF.GameFramework.UI.Editor
         /// </summary>
         private static string GetOutputDirectory()
         {
-            return Path.Combine(Application.dataPath, "Scripts", "UI", "Generated");
+            var settings = UIDesignerSettings.Instance;
+            string projectPath = Path.GetDirectoryName(Application.dataPath);
+            return Path.Combine(projectPath, settings.bindingGeneratePath);
         }
         
         /// <summary>
