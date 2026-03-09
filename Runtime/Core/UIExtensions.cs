@@ -20,7 +20,7 @@ namespace UGF.GameFramework.UI
         {
             return GameEntry.GetComponent<UIConfigManager>();
         }
-        
+
         /// <summary>
         /// 打开UI窗体（使用配置）
         /// </summary>
@@ -34,34 +34,22 @@ namespace UGF.GameFramework.UI
             {
                 throw new ArgumentNullException(nameof(uiComponent));
             }
-            
+
             var configManager = GetUIConfigManager();
             var config = configManager?.GetUIFormConfig(formName);
-            
+
             if (config == null)
             {
                 Log.Error($"UI form config '{formName}' not found.");
                 return -1;
             }
-            
-            return uiComponent.OpenUIForm(config.AssetPath, config.UIGroupName, config.Priority, config.PausesCoveredUIForm, userData);
+
+            return uiComponent.OpenUIForm(config.AssetPath, config.UIGroupName, config.Priority, config.PausesCoveredUIForm, new UIFormBaseData(config, userData));
         }
-        
-        /// <summary>
-        /// 设置UI窗体配置
-        /// </summary>
-        /// <param name="uiForm">UI窗体</param>
-        /// <param name="config">配置</param>
-        public static void SetConfig(this UIFormBase uiForm, UIFormConfig config)
-        {
-            if (uiForm == null)
-            {
-                throw new ArgumentNullException(nameof(uiForm));
-            }
-            
-            uiForm.SetConfig(config);
-        }
-        
+
+
+
+
         /// <summary>
         /// 获取UI窗体配置
         /// </summary>
@@ -73,40 +61,10 @@ namespace UGF.GameFramework.UI
             {
                 throw new ArgumentNullException(nameof(uiForm));
             }
-            
+
             return uiForm.Config;
         }
-        
-        /// <summary>
-        /// 安全获取组件
-        /// </summary>
-        /// <typeparam name="T">组件类型</typeparam>
-        /// <param name="uiForm">UI窗体</param>
-        /// <param name="variableName">变量名</param>
-        /// <returns>组件实例</returns>
-        public static T SafeGetComponent<T>(this UIFormBase uiForm, string variableName) where T : Component
-        {
-            if (uiForm == null)
-            {
-                Log.Warning("UIForm is null.");
-                return null;
-            }
-            
-            if (string.IsNullOrEmpty(variableName))
-            {
-                Log.Warning("Variable name is null or empty.");
-                return null;
-            }
-            
-            var component = uiForm.GetComponent<T>(variableName);
-            if (component == null)
-            {
-                Log.Warning($"Component '{variableName}' of type '{typeof(T).Name}' not found in UI form '{uiForm.name}'.");
-            }
-            
-            return component;
-        }
-        
+
         /// <summary>
         /// 设置按钮点击事件
         /// </summary>
@@ -119,14 +77,14 @@ namespace UGF.GameFramework.UI
                 Log.Warning("Button is null.");
                 return;
             }
-            
+
             button.onClick.RemoveAllListeners();
             if (onClick != null)
             {
                 button.onClick.AddListener(onClick);
             }
         }
-        
+
         /// <summary>
         /// 设置切换按钮值改变事件
         /// </summary>
@@ -139,14 +97,14 @@ namespace UGF.GameFramework.UI
                 Log.Warning("Toggle is null.");
                 return;
             }
-            
+
             toggle.onValueChanged.RemoveAllListeners();
             if (onValueChanged != null)
             {
                 toggle.onValueChanged.AddListener(onValueChanged);
             }
         }
-        
+
         /// <summary>
         /// 设置滑动条值改变事件
         /// </summary>
@@ -159,14 +117,14 @@ namespace UGF.GameFramework.UI
                 Log.Warning("Slider is null.");
                 return;
             }
-            
+
             slider.onValueChanged.RemoveAllListeners();
             if (onValueChanged != null)
             {
                 slider.onValueChanged.AddListener(onValueChanged);
             }
         }
-        
+
         /// <summary>
         /// 设置输入框值改变事件
         /// </summary>
@@ -179,14 +137,14 @@ namespace UGF.GameFramework.UI
                 Log.Warning("InputField is null.");
                 return;
             }
-            
+
             inputField.onValueChanged.RemoveAllListeners();
             if (onValueChanged != null)
             {
                 inputField.onValueChanged.AddListener(onValueChanged);
             }
         }
-        
+
         /// <summary>
         /// 设置输入框结束编辑事件
         /// </summary>
@@ -199,14 +157,14 @@ namespace UGF.GameFramework.UI
                 Log.Warning("InputField is null.");
                 return;
             }
-            
+
             inputField.onEndEdit.RemoveAllListeners();
             if (onEndEdit != null)
             {
                 inputField.onEndEdit.AddListener(onEndEdit);
             }
         }
-        
+
         /// <summary>
         /// 设置下拉框值改变事件
         /// </summary>
@@ -219,14 +177,14 @@ namespace UGF.GameFramework.UI
                 Log.Warning("Dropdown is null.");
                 return;
             }
-            
+
             dropdown.onValueChanged.RemoveAllListeners();
             if (onValueChanged != null)
             {
                 dropdown.onValueChanged.AddListener(onValueChanged);
             }
         }
-        
+
         /// <summary>
         /// 设置UI元素激活状态
         /// </summary>
@@ -239,13 +197,13 @@ namespace UGF.GameFramework.UI
                 Log.Warning("GameObject is null.");
                 return;
             }
-            
+
             if (gameObject.activeSelf != active)
             {
                 gameObject.SetActive(active);
             }
         }
-        
+
         /// <summary>
         /// 设置UI元素可交互状态
         /// </summary>
@@ -258,10 +216,10 @@ namespace UGF.GameFramework.UI
                 Log.Warning("Selectable is null.");
                 return;
             }
-            
+
             selectable.interactable = interactable;
         }
-        
+
         /// <summary>
         /// 设置文本内容
         /// </summary>
@@ -274,10 +232,10 @@ namespace UGF.GameFramework.UI
                 Log.Warning("Text is null.");
                 return;
             }
-            
+
             text.text = content ?? string.Empty;
         }
-        
+
         /// <summary>
         /// 设置图片精灵
         /// </summary>
@@ -290,10 +248,10 @@ namespace UGF.GameFramework.UI
                 Log.Warning("Image is null.");
                 return;
             }
-            
+
             image.sprite = sprite;
         }
-        
+
         /// <summary>
         /// 设置图片颜色
         /// </summary>
@@ -306,7 +264,7 @@ namespace UGF.GameFramework.UI
                 Log.Warning("Graphic is null.");
                 return;
             }
-            
+
             graphic.color = color;
         }
     }

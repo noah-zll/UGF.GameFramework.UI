@@ -17,13 +17,14 @@ namespace UGF.GameFramework.UI.Editor
         private UIDesigner designer;
         private SerializedProperty uiFormNameProp;
         private SerializedProperty namespaceNameProp;
+        private SerializedProperty baseTypeProp;
         private SerializedProperty autoGenerateCodeProp;
         private SerializedProperty componentBindingsProp;
-        
+
         private bool showComponentBindings = true;
         private bool showAdvancedSettings = false;
         private ReorderableList componentBindingsList;
-        
+
         // 简化的两步式工作流程状态
         private bool _isCodeGenerated = false;
 
@@ -34,7 +35,7 @@ namespace UGF.GameFramework.UI.Editor
             {
                 return;
             }
-            
+
             // 检查serializedObject是否有效
             try
             {
@@ -48,10 +49,11 @@ namespace UGF.GameFramework.UI.Editor
                 // serializedObject访问失败，直接返回
                 return;
             }
-            
+
             designer = (UIDesigner)target;
             uiFormNameProp = serializedObject.FindProperty("uiFormName");
             namespaceNameProp = serializedObject.FindProperty("namespaceName");
+            baseTypeProp = serializedObject.FindProperty("baseType");
             autoGenerateCodeProp = serializedObject.FindProperty("autoGenerateCode");
             componentBindingsProp = serializedObject.FindProperty("componentBindings");
 
@@ -78,11 +80,11 @@ namespace UGF.GameFramework.UI.Editor
                     }
                 }
             };
-            
+
             // 初始化代码生成状态
             InitializeCodeGenerationState();
         }
-        
+
         /// <summary>
         /// 初始化代码生成状态
         /// </summary>
@@ -94,7 +96,7 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.Log("[UIDesignerEditor] 代码生成状态初始化：false（UIDesigner或UIFormName为空）");
                 return;
             }
-            
+
             // 使用固定的输出目录路径检测文件是否存在
             try
             {
@@ -102,15 +104,15 @@ namespace UGF.GameFramework.UI.Editor
                 string projectPath = System.IO.Path.GetDirectoryName(Application.dataPath);
                 string bindingDirectory = System.IO.Path.Combine(projectPath, settings.bindingGeneratePath);
                 string logicDirectory = System.IO.Path.Combine(projectPath, settings.logicGeneratePath);
-                
+
                 string bindingFilePath = System.IO.Path.Combine(bindingDirectory, $"{designer.UIFormName}.Generated.cs");
                 string logicFilePath = System.IO.Path.Combine(logicDirectory, $"{designer.UIFormName}.cs");
-                
+
                 bool bindingExists = System.IO.File.Exists(bindingFilePath);
                 bool logicExists = System.IO.File.Exists(logicFilePath);
-                
+
                 _isCodeGenerated = bindingExists && logicExists;
-                
+
                 Debug.Log($"[UIDesignerEditor] 代码生成状态初始化：{_isCodeGenerated}（绑定类：{bindingExists}，逻辑类：{logicExists}）");
                 Debug.Log($"[UIDesignerEditor] 检查路径 - 绑定类：{bindingFilePath}，逻辑类：{logicFilePath}");
             }
@@ -129,7 +131,7 @@ namespace UGF.GameFramework.UI.Editor
                 EditorGUILayout.HelpBox("UIDesigner组件已被删除或无效", MessageType.Warning);
                 return;
             }
-            
+
             // 检查serializedObject是否有效
             try
             {
@@ -145,70 +147,72 @@ namespace UGF.GameFramework.UI.Editor
                 EditorGUILayout.HelpBox($"序列化对象访问失败: {ex.Message}", MessageType.Error);
                 return;
             }
-            
+
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("UI设计器", EditorStyles.boldLabel);
             EditorGUILayout.Space();
-            
+
             // 基本设置
             DrawBasicSettings();
-            
+
             EditorGUILayout.Space();
-            
+
             // 组件绑定列表
             DrawComponentBindings();
-            
+
             EditorGUILayout.Space();
-            
+
             // 高级设置
             DrawAdvancedSettings();
-            
+
             EditorGUILayout.Space();
-            
+
             // 操作按钮
             DrawActionButtons();
-            
+
             // 安全地应用序列化对象的修改
             SafeApplyModifiedProperties();
         }
-        
+
         /// <summary>
         /// 绘制基本设置
         /// </summary>
         private void DrawBasicSettings()
         {
             if (designer == null) return;
-            
+
             EditorGUILayout.LabelField("基本设置", EditorStyles.boldLabel);
-            
+
             EditorGUILayout.PropertyField(uiFormNameProp, new GUIContent("UI界面名称"));
             if (string.IsNullOrEmpty(uiFormNameProp.stringValue))
             {
                 EditorGUILayout.HelpBox($"将使用GameObject名称: {designer.gameObject.name}", MessageType.Info);
             }
-            
+
             EditorGUILayout.PropertyField(namespaceNameProp, new GUIContent("命名空间"));
             if (string.IsNullOrEmpty(namespaceNameProp.stringValue))
             {
                 EditorGUILayout.HelpBox("将使用默认命名空间: Game.UI", MessageType.Info);
             }
-            
+
+            EditorGUILayout.PropertyField(baseTypeProp, new GUIContent("基类类型"));
+
             EditorGUILayout.PropertyField(autoGenerateCodeProp, new GUIContent("自动生成代码"));
         }
-        
+
         /// <summary>
         /// 绘制组件绑定列表
         /// </summary>
         private void DrawComponentBindings()
         {
             if (designer == null) return;
-            
+
             showComponentBindings = EditorGUILayout.Foldout(showComponentBindings, $"组件绑定列表 ({componentBindingsProp.arraySize})", true);
-            
+
             if (showComponentBindings)
             {
                 EditorGUI.indentLevel++;
-                
+
                 // 操作按钮
                 EditorGUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
@@ -224,16 +228,16 @@ namespace UGF.GameFramework.UI.Editor
                     }
                 }
                 EditorGUILayout.EndHorizontal();
-                
+
                 EditorGUILayout.Space();
-                
+
                 // 使用ReorderableList绘制可拖拽的组件绑定列表
                 componentBindingsList.DoLayoutList();
-                
+
                 EditorGUI.indentLevel--;
             }
         }
-        
+
         /// <summary>
         /// 绘制单个组件绑定项
         /// </summary>
@@ -245,9 +249,9 @@ namespace UGF.GameFramework.UI.Editor
             SerializedProperty componentTypeProp = bindingProp.FindPropertyRelative("componentType");
             SerializedProperty descriptionProp = bindingProp.FindPropertyRelative("description");
             // fieldNameProp已移除，字段名现在自动生成
-            
+
             EditorGUILayout.BeginVertical("box");
-            
+
             // 标题行
             EditorGUILayout.BeginHorizontal();
             string title = string.IsNullOrEmpty(componentNameProp.stringValue) ? $"组件绑定 {index + 1}" : componentNameProp.stringValue;
@@ -261,12 +265,12 @@ namespace UGF.GameFramework.UI.Editor
                 return;
             }
             EditorGUILayout.EndHorizontal();
-            
+
             // 组件设置
             EditorGUILayout.PropertyField(componentNameProp, new GUIContent("变量名称"));
-            
 
-            
+
+
             // 单个组件绑定（只读显示）
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.PropertyField(componentProp, new GUIContent("绑定组件"));
@@ -278,23 +282,23 @@ namespace UGF.GameFramework.UI.Editor
                 if (comp != null)
                 {
                     componentTypeProp.stringValue = comp.GetType().Name;
-                    
+
                     // 自动设置变量名称
                     if (string.IsNullOrEmpty(componentNameProp.stringValue))
                     {
                         string autoName = GenerateVariableName(comp);
                         componentNameProp.stringValue = autoName;
                     }
-                    
+
                     // 字段名现在基于组件名自动生成，无需手动设置
                 }
             }
-            
+
             // 组件类型不显示，但仍然自动设置值
-            
+
             // 描述可编辑
             EditorGUILayout.PropertyField(descriptionProp, new GUIContent("描述"));
-            
+
             // 验证状态
             if (componentProp.objectReferenceValue == null)
             {
@@ -304,11 +308,11 @@ namespace UGF.GameFramework.UI.Editor
             {
                 EditorGUILayout.HelpBox("请输入变量名称", MessageType.Warning);
             }
-            
+
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space();
         }
-        
+
         /// <summary>
         /// 在ReorderableList中绘制单个组件绑定项
         /// </summary>
@@ -319,31 +323,31 @@ namespace UGF.GameFramework.UI.Editor
             SerializedProperty componentProp = bindingProp.FindPropertyRelative("component");
             SerializedProperty componentTypeProp = bindingProp.FindPropertyRelative("componentType");
             SerializedProperty descriptionProp = bindingProp.FindPropertyRelative("description");
-            
+
             float lineHeight = EditorGUIUtility.singleLineHeight;
             float spacing = EditorGUIUtility.standardVerticalSpacing;
             float currentY = rect.y + spacing;
-            
+
             // 标题行
             Rect titleRect = new Rect(rect.x, currentY, rect.width, lineHeight);
             string title = string.IsNullOrEmpty(componentNameProp.stringValue) ? $"组件绑定 {index + 1}" : componentNameProp.stringValue;
             EditorGUI.LabelField(titleRect, title, EditorStyles.boldLabel);
             currentY += lineHeight + spacing;
-            
+
             // 变量名称
             Rect nameRect = new Rect(rect.x, currentY, rect.width, lineHeight);
             EditorGUI.PropertyField(nameRect, componentNameProp, new GUIContent("变量名称"));
             currentY += lineHeight + spacing;
-            
 
-            
+
+
             // 单个组件绑定（只读显示）
             Rect componentRect = new Rect(rect.x, currentY, rect.width, lineHeight);
             EditorGUI.BeginDisabledGroup(true);
             EditorGUI.PropertyField(componentRect, componentProp, new GUIContent("绑定组件"));
             EditorGUI.EndDisabledGroup();
             currentY += lineHeight + spacing;
-            
+
             if (componentProp.objectReferenceValue != null)
             {
                 Component comp = componentProp.objectReferenceValue as Component;
@@ -357,18 +361,40 @@ namespace UGF.GameFramework.UI.Editor
                     }
                 }
             }
-            
+
             // 组件类型不显示，但仍然自动设置值
-            
+
             // 描述
             Rect descRect = new Rect(rect.x, currentY, rect.width, lineHeight);
             EditorGUI.PropertyField(descRect, descriptionProp, new GUIContent("描述"));
             currentY += lineHeight + spacing;
-            
+
+            // 事件选择
+            if (componentProp.objectReferenceValue != null)
+            {
+                Component comp = componentProp.objectReferenceValue as Component;
+                var availableEvents = GetAvailableEvents(comp.GetType());
+                if (availableEvents.Count > 0)
+                {
+                    SerializedProperty boundEventsProp = bindingProp.FindPropertyRelative("boundEvents");
+
+                    Rect eventRect = new Rect(rect.x, currentY, rect.width, lineHeight);
+                    Rect controlRect = EditorGUI.PrefixLabel(eventRect, new GUIContent("绑定事件"));
+
+                    string buttonText = GetEventSelectionDisplayText(boundEventsProp, availableEvents);
+                    if (EditorGUI.DropdownButton(controlRect, new GUIContent(buttonText), FocusType.Keyboard))
+                    {
+                        ShowEventMenu(controlRect, boundEventsProp, availableEvents);
+                    }
+
+                    currentY += lineHeight + spacing;
+                }
+            }
+
             // 验证状态
             bool hasWarning = false;
             string warningMessage = "";
-            
+
             if (componentProp.objectReferenceValue == null)
             {
                 hasWarning = true;
@@ -379,14 +405,14 @@ namespace UGF.GameFramework.UI.Editor
                 hasWarning = true;
                 warningMessage = "请输入变量名称";
             }
-            
+
             if (hasWarning)
             {
                 Rect warningRect = new Rect(rect.x, currentY, rect.width, lineHeight * 2);
                 EditorGUI.HelpBox(warningRect, warningMessage, MessageType.Warning);
             }
         }
-        
+
         /// <summary>
         /// 获取组件绑定项的高度
         /// </summary>
@@ -395,11 +421,11 @@ namespace UGF.GameFramework.UI.Editor
             SerializedProperty bindingProp = componentBindingsProp.GetArrayElementAtIndex(index);
             SerializedProperty componentProp = bindingProp.FindPropertyRelative("component");
             SerializedProperty componentNameProp = bindingProp.FindPropertyRelative("componentName");
-            
+
             float lineHeight = EditorGUIUtility.singleLineHeight;
             float spacing = EditorGUIUtility.standardVerticalSpacing;
             float totalHeight = spacing; // 顶部间距
-            
+
             // 标题行
             totalHeight += lineHeight + spacing;
             // 变量名称
@@ -408,52 +434,63 @@ namespace UGF.GameFramework.UI.Editor
             totalHeight += lineHeight + spacing;
             // 描述
             totalHeight += lineHeight + spacing;
-            
+
+            // 事件选择
+            if (componentProp.objectReferenceValue != null)
+            {
+                Component comp = componentProp.objectReferenceValue as Component;
+                var availableEvents = GetAvailableEvents(comp.GetType());
+                if (availableEvents.Count > 0)
+                {
+                    totalHeight += lineHeight + spacing;
+                }
+            }
+
             // 验证状态警告
             bool hasWarning = componentProp.objectReferenceValue == null || string.IsNullOrEmpty(componentNameProp.stringValue);
-            
+
             if (hasWarning)
             {
                 totalHeight += lineHeight * 2 + spacing; // 警告框高度
             }
-            
+
             totalHeight += spacing; // 底部间距
-            
+
             return totalHeight;
         }
-        
+
         /// <summary>
         /// 绘制高级设置
         /// </summary>
         private void DrawAdvancedSettings()
         {
             if (designer == null) return;
-            
+
             showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "高级设置", true);
-            
+
             if (showAdvancedSettings)
             {
                 EditorGUI.indentLevel++;
-                
+
                 EditorGUILayout.LabelField("生成的类名信息:", EditorStyles.boldLabel);
                 EditorGUILayout.LabelField($"组件绑定类: {designer.GetBindingClassName()}.Generated.cs");
                 EditorGUILayout.LabelField($"业务逻辑类: {designer.GetLogicClassName()}.cs");
-                
+
                 EditorGUI.indentLevel--;
             }
         }
-        
+
         /// <summary>
         /// 绘制操作按钮
         /// </summary>
         private void DrawActionButtons()
         {
             if (designer == null) return;
-            
+
             EditorGUILayout.LabelField("操作", EditorStyles.boldLabel);
-            
+
             EditorGUILayout.BeginHorizontal();
-            
+
             // 两步式工作流程：根据代码生成状态显示不同按钮
             if (!_isCodeGenerated)
             {
@@ -470,23 +507,23 @@ namespace UGF.GameFramework.UI.Editor
                 {
                     SaveUIDesign();
                 }
-                
+
                 // 重新生成代码按钮
                 if (GUILayout.Button("重新生成代码", GUILayout.Height(30)))
                 {
                     RegenerateCode();
                 }
             }
-            
+
             if (GUILayout.Button("验证设置", GUILayout.Height(30)))
             {
                 ValidateSettings();
             }
-            
+
             EditorGUILayout.EndHorizontal();
-            
+
             EditorGUILayout.Space();
-            
+
             // 显示当前状态
             if (_isCodeGenerated)
             {
@@ -496,19 +533,19 @@ namespace UGF.GameFramework.UI.Editor
             {
                 EditorGUILayout.HelpBox("请先点击'生成代码'按钮生成UI脚本", MessageType.Info);
             }
-            
+
             EditorGUILayout.Space();
-            
+
             EditorGUILayout.BeginHorizontal();
-            
+
             if (GUILayout.Button("清理设计脚本", GUILayout.Height(25)))
             {
                 CleanupDesignScripts();
             }
-            
+
             EditorGUILayout.EndHorizontal();
         }
-        
+
         /// <summary>
         /// 安全地应用序列化对象的修改
         /// </summary>
@@ -526,7 +563,7 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogWarning($"[UIDesignerEditor] 应用序列化对象修改失败: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 添加新的组件绑定
         /// </summary>
@@ -535,7 +572,7 @@ namespace UGF.GameFramework.UI.Editor
             componentBindingsProp.arraySize++;
             SafeApplyModifiedProperties();
         }
-        
+
         /// <summary>
         /// 移除组件绑定
         /// </summary>
@@ -544,7 +581,7 @@ namespace UGF.GameFramework.UI.Editor
             componentBindingsProp.DeleteArrayElementAtIndex(index);
             SafeApplyModifiedProperties();
         }
-        
+
         /// <summary>
         /// 清空组件绑定
         /// </summary>
@@ -553,7 +590,7 @@ namespace UGF.GameFramework.UI.Editor
             componentBindingsProp.ClearArray();
             SafeApplyModifiedProperties();
         }
-        
+
         /// <summary>
         /// 同步选中的UIComponentBinder组件
         /// </summary>
@@ -565,7 +602,7 @@ namespace UGF.GameFramework.UI.Editor
                 EditorUtility.DisplayDialog("提示", "请先选择要扫描的GameObject", "确定");
                 return;
             }
-            
+
             var componentBinders = new List<UIComponentBinder>();
             foreach (var obj in selectedObjects)
             {
@@ -575,14 +612,14 @@ namespace UGF.GameFramework.UI.Editor
                     componentBinders.Add(binder);
                 }
             }
-            
+
             int beforeCount = componentBindingsProp.arraySize;
             AddUIComponentBindersToBindings(componentBinders);
             int afterCount = componentBindingsProp.arraySize;
-            
+
             Debug.Log($"同步选中UIComponentBinder完成，找到 {componentBinders.Count} 个组件绑定器，绑定列表从 {beforeCount} 个更新为 {afterCount} 个");
         }
-        
+
         /// <summary>
         /// 同步所有子UIComponentBinder组件
         /// </summary>
@@ -591,44 +628,50 @@ namespace UGF.GameFramework.UI.Editor
             var componentBinders = designer.GetComponentsInChildren<UIComponentBinder>(true)
                 .Where(c => c != null)
                 .ToList();
-            
+
             int beforeCount = componentBindingsProp.arraySize;
             AddUIComponentBindersToBindings(componentBinders);
             int afterCount = componentBindingsProp.arraySize;
-            
+
             Debug.Log($"同步UIComponentBinder完成，找到 {componentBinders.Count} 个组件绑定器，绑定列表从 {beforeCount} 个更新为 {afterCount} 个");
         }
-        
+
         /// <summary>
         /// 同步UIComponentBinder到绑定列表，确保数量一致
         /// </summary>
         private void AddUIComponentBindersToBindings(List<UIComponentBinder> componentBinders)
         {
-            // 获取所有有效的目标组件
+            // Map component to binder for later use
+            var componentToBinderMap = new Dictionary<Component, UIComponentBinder>();
             var validTargetComponents = new List<Component>();
+
             foreach (var binder in componentBinders)
             {
                 var targetComponent = binder.GetTargetComponent();
                 if (targetComponent != null)
                 {
                     validTargetComponents.Add(targetComponent);
+                    if (!componentToBinderMap.ContainsKey(targetComponent))
+                    {
+                        componentToBinderMap[targetComponent] = binder;
+                    }
                 }
             }
-            
+
             // 先删除不再存在的绑定（从后往前删除以避免索引问题）
             for (int i = componentBindingsProp.arraySize - 1; i >= 0; i--)
             {
                 var bindingProp = componentBindingsProp.GetArrayElementAtIndex(i);
                 var componentProp = bindingProp.FindPropertyRelative("component");
                 var boundComponent = componentProp.objectReferenceValue as Component;
-                
+
                 // 如果绑定的组件不在有效的目标组件列表中，则删除这个绑定
                 if (boundComponent == null || !validTargetComponents.Contains(boundComponent))
                 {
                     componentBindingsProp.DeleteArrayElementAtIndex(i);
                 }
             }
-            
+
             // 再添加新的绑定
             foreach (var targetComponent in validTargetComponents)
             {
@@ -644,26 +687,39 @@ namespace UGF.GameFramework.UI.Editor
                         break;
                     }
                 }
-                
+
                 if (!alreadyBound)
                 {
                     // 添加新绑定
                     componentBindingsProp.arraySize++;
                     var newBindingProp = componentBindingsProp.GetArrayElementAtIndex(componentBindingsProp.arraySize - 1);
-                    
+
                     newBindingProp.FindPropertyRelative("component").objectReferenceValue = targetComponent;
                     newBindingProp.FindPropertyRelative("componentType").stringValue = targetComponent.GetType().Name;
                     // 生成变量名
                     string variableName = GenerateVariableName(targetComponent);
                     newBindingProp.FindPropertyRelative("componentName").stringValue = variableName;
-        
+
                     newBindingProp.FindPropertyRelative("description").stringValue = "";
+
+                    // 设置默认事件
+                    if (componentToBinderMap.TryGetValue(targetComponent, out var binder))
+                    {
+                        var availableEvents = GetAvailableEvents(targetComponent.GetType());
+                        var boundEventsProp = newBindingProp.FindPropertyRelative("boundEvents");
+                        boundEventsProp.ClearArray();
+                        foreach (var evt in availableEvents)
+                        {
+                            boundEventsProp.InsertArrayElementAtIndex(boundEventsProp.arraySize);
+                            boundEventsProp.GetArrayElementAtIndex(boundEventsProp.arraySize - 1).stringValue = evt;
+                        }
+                    }
                 }
             }
-            
+
             SafeApplyModifiedProperties();
         }
-        
+
         /// <summary>
         /// 将组件添加到绑定列表（保留原方法以兼容其他功能）
         /// </summary>
@@ -683,24 +739,24 @@ namespace UGF.GameFramework.UI.Editor
                         break;
                     }
                 }
-                
+
                 if (!alreadyBound)
                 {
                     // 添加新绑定
                     componentBindingsProp.arraySize++;
                     var newBindingProp = componentBindingsProp.GetArrayElementAtIndex(componentBindingsProp.arraySize - 1);
-                    
+
                     newBindingProp.FindPropertyRelative("component").objectReferenceValue = comp;
                     newBindingProp.FindPropertyRelative("componentType").stringValue = comp.GetType().Name;
                     newBindingProp.FindPropertyRelative("componentName").stringValue = GenerateVariableName(comp);
-        
+
                     newBindingProp.FindPropertyRelative("description").stringValue = "";
                 }
             }
-            
+
             SafeApplyModifiedProperties();
         }
-        
+
         /// <summary>
         /// 生成变量名称
         /// </summary>
@@ -708,28 +764,28 @@ namespace UGF.GameFramework.UI.Editor
         {
             string typeName = component.GetType().Name;
             string objectName = component.gameObject.name;
-            
+
             // 移除常见的UI前缀
             objectName = objectName.Replace("UI", "").Replace("ui", "");
-            
+
             // 移除所有空格和特殊字符
             objectName = System.Text.RegularExpressions.Regex.Replace(objectName, @"[^a-zA-Z0-9]", "");
-            
+
             // 组合名称
             string variableName = $"{objectName}{typeName}";
-            
+
             // 确保首字母小写
             if (!string.IsNullOrEmpty(variableName))
             {
                 variableName = char.ToLower(variableName[0]) + variableName.Substring(1);
             }
-            
+
             // 检查重复并生成唯一名称
             variableName = EnsureUniqueVariableName(variableName);
-            
+
             return variableName;
         }
-        
+
         /// <summary>
         /// 确保变量名唯一
         /// </summary>
@@ -737,16 +793,16 @@ namespace UGF.GameFramework.UI.Editor
         {
             string uniqueName = baseName;
             int counter = 1;
-            
+
             while (IsVariableNameExists(uniqueName))
             {
                 uniqueName = $"{baseName}{counter}";
                 counter++;
             }
-            
+
             return uniqueName;
         }
-        
+
         /// <summary>
         /// 检查变量名是否已存在
         /// </summary>
@@ -763,7 +819,7 @@ namespace UGF.GameFramework.UI.Editor
             }
             return false;
         }
-        
+
         /// <summary>
         /// 保存UI设计（使用简化的工作流程）
         /// </summary>
@@ -772,42 +828,42 @@ namespace UGF.GameFramework.UI.Editor
             try
             {
                 Debug.Log("[UIDesignerEditor] 开始保存UI设计...");
-                
+
                 // 检查代码是否已生成
                 if (!_isCodeGenerated)
                 {
                     EditorUtility.DisplayDialog("错误", "请先点击'生成代码'按钮生成UI脚本", "确定");
                     return;
                 }
-                
+
                 // 验证设置
                 if (!ValidateSettings())
                 {
                     return;
                 }
-                
+
                 // 生成Prefab保存路径
                 string prefabPath = GeneratePrefabPath(designer.UIFormName);
-                
+
                 Debug.Log($"[UIDesignerEditor] 启动简化保存工作流程: {designer.gameObject.name} -> {prefabPath}");
-                
+
                 // 使用简化的工作流程保存Prefab
                 if (SimpleUIWorkflow.SaveAsPrefab(designer, prefabPath))
                 {
                     // 重置代码生成状态，准备下次使用
                     _isCodeGenerated = false;
                     Debug.Log("[UIDesignerEditor] 重置代码生成状态，准备下次使用");
-                    
+
                     // 刷新界面以更新按钮状态
                     Repaint();
-                    
+
                     // 显示完成通知
                     var settings = UIDesignerSettings.Instance;
                     if (settings.showCompletionNotification)
                     {
                         EditorUtility.DisplayDialog("保存完成", $"UI设计已成功保存为Prefab:\n{prefabPath}", "确定");
                     }
-                    
+
                     Debug.Log($"[UIDesignerEditor] UI设计保存完成: {prefabPath}");
                 }
                 else
@@ -821,9 +877,9 @@ namespace UGF.GameFramework.UI.Editor
                 EditorUtility.DisplayDialog("错误", $"保存UI设计失败：{ex.Message}", "确定");
             }
         }
-        
+
         #region 验证设置
-        
+
         /// <summary>
         /// 验证设置
         /// </summary>
@@ -834,22 +890,22 @@ namespace UGF.GameFramework.UI.Editor
                 EditorUtility.DisplayDialog("错误", "UIDesigner组件无效", "确定");
                 return false;
             }
-            
+
             if (string.IsNullOrEmpty(designer.UIFormName))
             {
                 EditorUtility.DisplayDialog("错误", "UI窗体名称不能为空", "确定");
                 return false;
             }
-            
+
             if (string.IsNullOrEmpty(designer.NamespaceName))
             {
                 EditorUtility.DisplayDialog("错误", "命名空间不能为空", "确定");
                 return false;
             }
-            
+
             return true;
         }
-        
+
         /// <summary>
         /// 生成Prefab保存路径
         /// </summary>
@@ -862,11 +918,11 @@ namespace UGF.GameFramework.UI.Editor
             }
             return $"{prefabDirectory}/{uiFormName}.prefab";
         }
-        
 
-        
+
+
         #endregion
-        
+
         /// <summary>
         /// 清理资源
         /// </summary>
@@ -875,7 +931,7 @@ namespace UGF.GameFramework.UI.Editor
             // 清理进度条
             EditorUtility.ClearProgressBar();
         }
-        
+
         /// <summary>
         /// 挂载生成的脚本组件
         /// </summary>
@@ -883,7 +939,7 @@ namespace UGF.GameFramework.UI.Editor
         {
             AttachGeneratedScriptToGameObject(designer.gameObject, designer.UIFormName, designer.NamespaceName);
         }
-        
+
         /// <summary>
         /// 为指定GameObject挂载生成的脚本组件
         /// </summary>
@@ -894,9 +950,9 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError("GameObject为空，无法挂载脚本");
                 return;
             }
-            
+
             string scriptTypeName = $"{namespaceName}.{uiFormName}";
-            
+
             // 查找生成的脚本类型
             System.Type scriptType = FindScriptType(scriptTypeName);
             if (scriptType == null)
@@ -904,14 +960,14 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError($"找不到生成的脚本类型：{scriptTypeName}，请确保脚本已编译");
                 return;
             }
-            
+
             // 检查是否已经挂载了该脚本
             if (gameObject.GetComponent(scriptType) != null)
             {
                 Debug.Log($"脚本组件 {uiFormName} 已存在，跳过挂载");
                 return;
             }
-            
+
             // 挂载脚本组件
             try
             {
@@ -923,7 +979,7 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError($"挂载脚本组件失败：{ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 绑定组件变量
         /// </summary>
@@ -931,7 +987,7 @@ namespace UGF.GameFramework.UI.Editor
         {
             BindComponentVariablesToGameObject(designer.gameObject, designer.UIFormName, designer.NamespaceName, designer.ComponentBindings);
         }
-        
+
         /// <summary>
         /// 为指定GameObject绑定组件变量
         /// </summary>
@@ -942,9 +998,9 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError("GameObject为空，无法绑定组件变量");
                 return;
             }
-            
+
             string scriptTypeName = $"{namespaceName}.{uiFormName}";
-            
+
             // 查找脚本组件
             System.Type scriptType = FindScriptType(scriptTypeName);
             if (scriptType == null)
@@ -952,17 +1008,17 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogWarning($"未找到脚本类型：{scriptTypeName}，跳过组件绑定");
                 return;
             }
-            
+
             Component scriptComponent = gameObject.GetComponent(scriptType);
             if (scriptComponent == null)
             {
                 Debug.LogWarning($"GameObject {gameObject.name} 未挂载脚本 {scriptType.Name}，跳过组件绑定");
                 return;
             }
-            
+
             // 使用SerializedObject进行组件绑定
             SerializedObject serializedScript = new SerializedObject(scriptComponent);
-            
+
             // 调试：输出脚本组件的所有序列化字段
             Debug.Log($"脚本组件 {scriptType.Name} 的序列化字段：");
             SerializedProperty iterator = serializedScript.GetIterator();
@@ -970,7 +1026,7 @@ namespace UGF.GameFramework.UI.Editor
             {
                 Debug.Log($"  字段: {iterator.name}, 类型: {iterator.propertyType}");
             }
-            
+
             int boundCount = 0;
             foreach (var binding in componentBindings)
             {
@@ -989,26 +1045,26 @@ namespace UGF.GameFramework.UI.Editor
                     }
                 }
             }
-            
+
             serializedScript.ApplyModifiedProperties();
             Debug.Log($"组件绑定完成，成功绑定 {boundCount}/{componentBindings.Count} 个变量");
         }
-        
+
         /// <summary>
         /// 清理设计脚本
         /// </summary>
         private void CleanupDesignScripts()
         {
             CleanupDesignScriptsFromGameObject(designer.gameObject);
-            
+
             // 重置代码生成状态，因为设计脚本已清理
             _isCodeGenerated = false;
             Debug.Log("[UIDesignerEditor] 清理设计脚本后重置代码生成状态");
-            
+
             // 刷新界面以更新按钮状态
             Repaint();
         }
-        
+
         /// <summary>
         /// 从指定GameObject清理设计脚本
         /// </summary>
@@ -1019,7 +1075,7 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError("GameObject为空，无法清理设计脚本");
                 return;
             }
-            
+
             // 移除所有UIComponentBinder组件
             UIComponentBinder[] binders = gameObject.GetComponentsInChildren<UIComponentBinder>(true);
             int binderCount = binders.Length;
@@ -1030,17 +1086,17 @@ namespace UGF.GameFramework.UI.Editor
                     DestroyImmediate(binder);
                 }
             }
-            
+
             // 移除UIDesigner组件
             UIDesigner designerComponent = gameObject.GetComponent<UIDesigner>();
             if (designerComponent != null)
             {
                 DestroyImmediate(designerComponent);
             }
-            
+
             Debug.Log($"清理设计脚本完成，移除了 {binderCount} 个UIComponentBinder和1个UIDesigner");
         }
-        
+
         /// <summary>
         /// 保存为Prefab
         /// </summary>
@@ -1052,10 +1108,10 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError("UIDesigner组件已被销毁，无法保存为Prefab");
                 return;
             }
-            
+
             SaveGameObjectAsPrefab(designer.gameObject, designer.UIFormName);
         }
-        
+
         /// <summary>
         /// 将指定GameObject保存为Prefab
         /// </summary>
@@ -1066,10 +1122,10 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError("GameObject为空，无法保存为Prefab");
                 return;
             }
-            
+
             // 检查当前是否已经是Prefab
             bool isPrefab = PrefabUtility.IsPartOfPrefabAsset(gameObject) || PrefabUtility.IsPartOfPrefabInstance(gameObject);
-            
+
             if (isPrefab)
             {
                 // 如果是Prefab实例，则覆盖原Prefab
@@ -1092,7 +1148,7 @@ namespace UGF.GameFramework.UI.Editor
                 // 如果不是Prefab，则保存为新Prefab
                 string prefabDirectory = UIDesignerSettings.Instance.defaultPrefabPath;
                 string prefabPath = $"{prefabDirectory}/{uiFormName}.prefab";
-                
+
                 // 确保目录存在
                 string directory = System.IO.Path.GetDirectoryName(prefabPath);
                 if (!System.IO.Directory.Exists(directory))
@@ -1100,7 +1156,7 @@ namespace UGF.GameFramework.UI.Editor
                     System.IO.Directory.CreateDirectory(directory);
                     AssetDatabase.Refresh();
                 }
-                
+
                 // 创建Prefab
                 GameObject prefab = PrefabUtility.SaveAsPrefabAsset(gameObject, prefabPath);
                 if (prefab != null)
@@ -1113,7 +1169,7 @@ namespace UGF.GameFramework.UI.Editor
                 }
             }
         }
-        
+
         /// <summary>
         /// 查找脚本类型
         /// </summary>
@@ -1125,7 +1181,7 @@ namespace UGF.GameFramework.UI.Editor
             {
                 return type;
             }
-            
+
             // 遍历所有程序集查找类型
             foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
             {
@@ -1135,10 +1191,10 @@ namespace UGF.GameFramework.UI.Editor
                     return type;
                 }
             }
-            
+
             return null;
         }
-        
+
         /// <summary>
         /// 生成代码（保留原方法用于单独生成代码）
         /// </summary>
@@ -1154,18 +1210,18 @@ namespace UGF.GameFramework.UI.Editor
                 {
                     return;
                 }
-                
+
                 Debug.Log("[UIDesignerEditor] 开始生成UI代码...");
-                
+
                 // 使用简化的工作流程生成代码
                 if (SimpleUIWorkflow.GenerateCode(designer))
                 {
                     // 标记代码已生成
                     _isCodeGenerated = true;
-                    
+
                     Debug.Log("[UIDesignerEditor] UI代码生成完成");
                     EditorUtility.DisplayDialog("成功", "代码生成完成！现在可以点击'保存'按钮继续后续流程。", "确定");
-                    
+
                     // 刷新界面
                     Repaint();
                 }
@@ -1180,7 +1236,7 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError($"[UIDesignerEditor] 代码生成失败：{ex}");
             }
         }
-        
+
         /// <summary>
         /// 重新生成代码
         /// </summary>
@@ -1189,7 +1245,7 @@ namespace UGF.GameFramework.UI.Editor
             _isCodeGenerated = false;
             GenerateCodeStep();
         }
-        
+
         /// <summary>
         /// 仅生成代码（保留原有方法用于兼容）
         /// </summary>
@@ -1206,7 +1262,132 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError($"代码生成失败：{ex}");
             }
         }
-        
+
+        private List<string> GetAvailableEvents(System.Type type)
+        {
+            List<string> events = new List<string>();
+            string typeName = type.Name;
+
+            if (typeName == "Button") events.Add("onClick");
+            else if (typeName == "Toggle") events.Add("onValueChanged");
+            else if (typeName == "Slider") events.Add("onValueChanged");
+            else if (typeName == "Scrollbar") events.Add("onValueChanged");
+            else if (typeName == "Dropdown" || typeName == "TMP_Dropdown") events.Add("onValueChanged");
+            else if (typeName == "InputField" || typeName == "TMP_InputField")
+            {
+                events.Add("onValueChanged");
+                events.Add("onEndEdit");
+            }
+            else if (typeName == "ScrollRect") events.Add("onValueChanged");
+
+            return events;
+        }
+
+        private bool IsEventSelected(SerializedProperty boundEventsProp, string eventName)
+        {
+            for (int i = 0; i < boundEventsProp.arraySize; i++)
+            {
+                if (boundEventsProp.GetArrayElementAtIndex(i).stringValue == eventName)
+                    return true;
+            }
+            return false;
+        }
+
+        private string GetEventSelectionDisplayText(SerializedProperty boundEventsProp, List<string> availableEvents)
+        {
+            if (boundEventsProp.arraySize == 0) return "Nothing";
+
+            // 检查是否全选
+            bool allSelected = true;
+            foreach (var evt in availableEvents)
+            {
+                if (!IsEventSelected(boundEventsProp, evt))
+                {
+                    allSelected = false;
+                    break;
+                }
+            }
+
+            if (allSelected && boundEventsProp.arraySize == availableEvents.Count) return "Everything";
+
+            List<string> selected = new List<string>();
+            for (int i = 0; i < boundEventsProp.arraySize; i++)
+            {
+                selected.Add(boundEventsProp.GetArrayElementAtIndex(i).stringValue);
+            }
+
+            return string.Join(", ", selected);
+        }
+
+        private void ShowEventMenu(Rect rect, SerializedProperty boundEventsProp, List<string> availableEvents)
+        {
+            GenericMenu menu = new GenericMenu();
+
+            // Nothing
+            menu.AddItem(new GUIContent("Nothing"), false, () =>
+            {
+                boundEventsProp.serializedObject.Update();
+                boundEventsProp.ClearArray();
+                boundEventsProp.serializedObject.ApplyModifiedProperties();
+            });
+
+            // Everything
+            menu.AddItem(new GUIContent("Everything"), false, () =>
+            {
+                boundEventsProp.serializedObject.Update();
+                boundEventsProp.ClearArray();
+                foreach (var evt in availableEvents)
+                {
+                    boundEventsProp.InsertArrayElementAtIndex(boundEventsProp.arraySize);
+                    boundEventsProp.GetArrayElementAtIndex(boundEventsProp.arraySize - 1).stringValue = evt;
+                }
+                boundEventsProp.serializedObject.ApplyModifiedProperties();
+            });
+
+            menu.AddSeparator("");
+
+            // Individual events
+            foreach (var evt in availableEvents)
+            {
+                bool isSelected = IsEventSelected(boundEventsProp, evt);
+                menu.AddItem(new GUIContent(evt), isSelected, () =>
+                {
+                    ToggleEvent(boundEventsProp, evt);
+                });
+            }
+
+            menu.DropDown(rect);
+        }
+
+        private void ToggleEvent(SerializedProperty boundEventsProp, string eventName)
+        {
+            boundEventsProp.serializedObject.Update();
+
+            bool exists = false;
+            int index = -1;
+            for (int i = 0; i < boundEventsProp.arraySize; i++)
+            {
+                if (boundEventsProp.GetArrayElementAtIndex(i).stringValue == eventName)
+                {
+                    exists = true;
+                    index = i;
+                    break;
+                }
+            }
+
+            if (exists)
+            {
+                boundEventsProp.DeleteArrayElementAtIndex(index);
+            }
+            else
+            {
+                boundEventsProp.InsertArrayElementAtIndex(boundEventsProp.arraySize);
+                boundEventsProp.GetArrayElementAtIndex(boundEventsProp.arraySize - 1).stringValue = eventName;
+            }
+
+            boundEventsProp.serializedObject.ApplyModifiedProperties();
+        }
+
 
     }
 }

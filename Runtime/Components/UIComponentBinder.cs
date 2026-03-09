@@ -12,12 +12,11 @@ namespace UGF.GameFramework.UI
     public class UIComponentBinder : MonoBehaviour
     {
         [SerializeField] private string m_ComponentTypeName = "";
-        [SerializeField] private bool m_BindEvents = true;
         [SerializeField] private string m_ComponentPath;
-        
+
         private Component m_CachedComponent;
         private Component[] m_AvailableComponents;
-        
+
         /// <summary>
         /// 组件类型名称
         /// </summary>
@@ -26,16 +25,7 @@ namespace UGF.GameFramework.UI
             get => m_ComponentTypeName;
             set => m_ComponentTypeName = value;
         }
-        
-        /// <summary>
-        /// 是否绑定事件
-        /// </summary>
-        public bool BindEvents
-        {
-            get => m_BindEvents;
-            set => m_BindEvents = value;
-        }
-        
+
         /// <summary>
         /// 组件路径
         /// </summary>
@@ -44,7 +34,7 @@ namespace UGF.GameFramework.UI
             get => m_ComponentPath;
             set => m_ComponentPath = value;
         }
-        
+
         /// <summary>
         /// 获取当前GameObject上的所有组件
         /// </summary>
@@ -59,22 +49,22 @@ namespace UGF.GameFramework.UI
                 return m_AvailableComponents;
             }
         }
-        
+
         /// <summary>
         /// 是否有效
         /// </summary>
         public bool IsValid => !string.IsNullOrEmpty(m_ComponentTypeName) && GetTargetComponent() != null;
-        
+
         private void Awake()
         {
             UpdateComponentInfo();
         }
-        
+
         private void OnValidate()
         {
             UpdateComponentInfo();
         }
-        
+
         /// <summary>
         /// 更新组件信息
         /// </summary>
@@ -82,7 +72,7 @@ namespace UGF.GameFramework.UI
         {
             // 更新可用组件列表
             UpdateAvailableComponents();
-            
+
             // 如果没有选择组件类型，自动选择第一个UI组件
             if (string.IsNullOrEmpty(m_ComponentTypeName) && m_AvailableComponents != null && m_AvailableComponents.Length > 0)
             {
@@ -92,14 +82,14 @@ namespace UGF.GameFramework.UI
                     m_ComponentTypeName = uiComponent.GetType().Name;
                 }
             }
-            
+
             // 生成组件路径
             m_ComponentPath = GenerateComponentPath();
-            
+
             // 清除缓存
             m_CachedComponent = null;
         }
-        
+
         /// <summary>
         /// 获取目标组件
         /// </summary>
@@ -112,7 +102,7 @@ namespace UGF.GameFramework.UI
             }
             return m_CachedComponent;
         }
-        
+
         /// <summary>
         /// 获取指定类型的组件
         /// </summary>
@@ -122,7 +112,7 @@ namespace UGF.GameFramework.UI
         {
             return GetTargetComponent() as T;
         }
-        
+
         /// <summary>
         /// 更新可用组件列表
         /// </summary>
@@ -139,7 +129,7 @@ namespace UGF.GameFramework.UI
                 m_AvailableComponents = new Component[0];
             }
         }
-        
+
         /// <summary>
         /// 根据类型名称获取组件
         /// </summary>
@@ -151,7 +141,7 @@ namespace UGF.GameFramework.UI
             {
                 UpdateAvailableComponents();
             }
-            
+
             foreach (var component in m_AvailableComponents)
             {
                 if (component.GetType().Name == typeName)
@@ -159,10 +149,10 @@ namespace UGF.GameFramework.UI
                     return component;
                 }
             }
-            
+
             return null;
         }
-        
+
         /// <summary>
         /// 获取第一个UI组件
         /// </summary>
@@ -170,7 +160,7 @@ namespace UGF.GameFramework.UI
         private Component GetFirstUIComponent()
         {
             if (m_AvailableComponents == null) return null;
-            
+
             // 按优先级查找UI组件
             var uiComponentTypes = new System.Type[]
             {
@@ -178,7 +168,7 @@ namespace UGF.GameFramework.UI
                 typeof(Dropdown), typeof(InputField), typeof(ScrollRect),
                 typeof(Text), typeof(Image), typeof(RawImage), typeof(CanvasGroup)
             };
-            
+
             foreach (var uiType in uiComponentTypes)
             {
                 foreach (var component in m_AvailableComponents)
@@ -189,10 +179,10 @@ namespace UGF.GameFramework.UI
                     }
                 }
             }
-            
+
             return null;
         }
-        
+
         /// <summary>
         /// 生成组件路径
         /// </summary>
@@ -201,7 +191,7 @@ namespace UGF.GameFramework.UI
         {
             var path = gameObject.name;
             var current = transform.parent;
-            
+
             while (current != null)
             {
                 // 如果找到Canvas或UIFormBase，停止向上查找
@@ -209,14 +199,14 @@ namespace UGF.GameFramework.UI
                 {
                     break;
                 }
-                
+
                 path = current.name + "/" + path;
                 current = current.parent;
             }
-            
+
             return path;
         }
-        
+
 
     }
 }

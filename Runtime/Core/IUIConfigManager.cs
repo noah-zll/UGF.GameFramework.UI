@@ -11,6 +11,11 @@ namespace UGF.GameFramework.UI
         UIGlobalConfig GlobalConfig { get; set; }
         
         /// <summary>
+        /// 初始化UI组
+        /// </summary>
+        void InitializeUIGroups();
+        
+        /// <summary>
         /// 添加UI窗体配置
         /// </summary>
         /// <param name="config">UI窗体配置</param>

@@ -28,7 +28,7 @@ namespace UGF.GameFramework.UI.Editor
                 return;
 
             GameObject gameObject = component.gameObject;
-            
+
             // 检查是否已经有UIDesigner组件
             UIDesigner existingDesigner = gameObject.GetComponent<UIDesigner>();
             if (existingDesigner != null)
@@ -40,16 +40,16 @@ namespace UGF.GameFramework.UI.Editor
 
             // 添加UIDesigner组件
             UIDesigner designer = gameObject.AddComponent<UIDesigner>();
-            
+
             // 尝试从现有UI脚本还原设计状态
             RestoreDesignFromExistingScript(designer);
-            
+
             // 选中新添加的UIDesigner组件
             Selection.activeObject = designer;
-            
+
             Debug.Log($"已为 {gameObject.name} 添加UIDesigner组件");
         }
-        
+
         /// <summary>
         /// 验证菜单项是否可用
         /// </summary>
@@ -59,11 +59,11 @@ namespace UGF.GameFramework.UI.Editor
             Component component = command.context as Component;
             if (component == null)
                 return false;
-                
+
             // 只对UI相关组件显示菜单
             return IsUIRelatedComponent(component);
         }
-        
+
         /// <summary>
         /// 添加到UIDesigner菜单项
         /// </summary>
@@ -72,7 +72,7 @@ namespace UGF.GameFramework.UI.Editor
         {
             Component component = command.context as Component;
             if (component == null) return;
-            
+
             // 为当前组件添加UIComponentBinder
             UIComponentBinder binder = component.gameObject.GetComponent<UIComponentBinder>();
             if (binder == null)
@@ -80,9 +80,8 @@ namespace UGF.GameFramework.UI.Editor
                 binder = component.gameObject.AddComponent<UIComponentBinder>();
                 // 设置绑定的组件类型
                 binder.ComponentTypeName = component.GetType().Name;
-                binder.BindEvents = ShouldBindEvents(component);
             }
-            
+
             // 查找父级的UIDesigner
             UIDesigner designer = FindUIDesignerInParents(component.transform);
             if (designer == null)
@@ -90,7 +89,7 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogWarning($"未找到父级UIDesigner组件，无法添加组件绑定: {component.name}");
                 return;
             }
-            
+
             // 创建组件绑定并添加到UIDesigner
             UIComponentBinding binding = new UIComponentBinding
             {
@@ -98,15 +97,15 @@ namespace UGF.GameFramework.UI.Editor
                 Component = component,
                 ComponentType = component.GetType().Name
             };
-            
+
             designer.AddComponentBinding(binding);
-            
+
             // 标记为已修改
             UnityEditor.EditorUtility.SetDirty(designer);
-            
+
             Debug.Log($"已将组件 {component.name} 添加到UIDesigner: {designer.name}");
         }
-        
+
         /// <summary>
         /// 验证是否可以添加到UIDesigner
         /// </summary>
@@ -115,28 +114,28 @@ namespace UGF.GameFramework.UI.Editor
         {
             Component component = command.context as Component;
             if (component == null) return false;
-            
+
             // 检查是否是UI组件
             if (!IsUIRelatedComponent(component)) return false;
-            
+
             // 检查是否能找到父级UIDesigner
             UIDesigner designer = FindUIDesignerInParents(component.transform);
             return designer != null;
         }
-        
+
         /// <summary>
         /// 检查是否是UI相关组件
         /// </summary>
         private static bool IsUIRelatedComponent(Component component)
         {
             // 基础UI组件
-            if (component is RectTransform || 
-                component is Canvas || 
+            if (component is RectTransform ||
+                component is Canvas ||
                 component is CanvasGroup ||
                 component is Graphic ||
                 component is Selectable)
                 return true;
-            
+
             // UGUI组件
             if (component is UnityEngine.UI.Button ||
                 component is UnityEngine.UI.Text ||
@@ -151,7 +150,7 @@ namespace UGF.GameFramework.UI.Editor
                 component is UnityEngine.UI.Mask ||
                 component is UnityEngine.UI.RectMask2D)
                 return true;
-            
+
             // TextMeshPro组件
             if (component.GetType().Name == "TextMeshProUGUI" ||
                 component.GetType().Name == "TextMeshPro" ||
@@ -159,7 +158,7 @@ namespace UGF.GameFramework.UI.Editor
                 component.GetType().Name == "TMP_InputField" ||
                 component.GetType().Name == "TMP_Dropdown")
                 return true;
-            
+
             // Layout组件
             if (component is UnityEngine.UI.LayoutElement ||
                 component is UnityEngine.UI.ContentSizeFitter ||
@@ -168,7 +167,7 @@ namespace UGF.GameFramework.UI.Editor
                 component is UnityEngine.UI.VerticalLayoutGroup ||
                 component is UnityEngine.UI.GridLayoutGroup)
                 return true;
-            
+
             // 检查是否在Canvas下
             Transform current = component.transform;
             while (current != null)
@@ -177,10 +176,10 @@ namespace UGF.GameFramework.UI.Editor
                     return true;
                 current = current.parent;
             }
-            
+
             return false;
         }
-        
+
         /// <summary>
         /// 在父级中查找UIDesigner组件
         /// </summary>
@@ -196,7 +195,7 @@ namespace UGF.GameFramework.UI.Editor
             }
             return null;
         }
-        
+
         /// <summary>
         /// 生成变量名
         /// </summary>
@@ -204,34 +203,22 @@ namespace UGF.GameFramework.UI.Editor
         {
             string baseName = component.name;
             string typeName = component.GetType().Name;
-            
+
             // 移除常见的UI前缀
             if (baseName.StartsWith("UI"))
                 baseName = baseName.Substring(2);
-            
+
             // 确保首字母小写
             if (!string.IsNullOrEmpty(baseName))
                 baseName = char.ToLower(baseName[0]) + baseName.Substring(1);
-            
+
             // 添加类型后缀（如果还没有的话）
             if (!baseName.EndsWith(typeName, System.StringComparison.OrdinalIgnoreCase))
                 baseName += typeName;
-            
+
             return baseName;
         }
-        
-        /// <summary>
-        /// 判断是否应该绑定事件
-        /// </summary>
-        private static bool ShouldBindEvents(Component component)
-        {
-            return component is UnityEngine.UI.Button ||
-                   component is UnityEngine.UI.Toggle ||
-                   component is UnityEngine.UI.Slider ||
-                   component is UnityEngine.UI.InputField ||
-                   component is UnityEngine.UI.Dropdown;
-        }
-        
+
         /// <summary>
         /// 从现有UI脚本还原设计状态
         /// </summary>
@@ -240,23 +227,23 @@ namespace UGF.GameFramework.UI.Editor
             try
             {
                 GameObject gameObject = designer.gameObject;
-                
+
                 // 查找可能的UI脚本组件
                 Component[] components = gameObject.GetComponents<Component>();
                 Component uiScriptComponent = null;
                 System.Type uiScriptType = null;
-                
+
                 Debug.Log($"开始扫描 {gameObject.name} 上的组件，共找到 {components.Length} 个组件");
-                
+
                 foreach (var comp in components)
                 {
-                    if (comp == null || comp is Transform || comp is RectTransform || 
+                    if (comp == null || comp is Transform || comp is RectTransform ||
                         comp is UIDesigner || comp is UIComponentBinder)
                         continue;
-                        
+
                     System.Type compType = comp.GetType();
                     Debug.Log($"检查组件：{compType.Name} (命名空间：{compType.Namespace})");
-                    
+
                     // 检查是否是自动生成的UI脚本（继承自UIFormBase或包含特定命名模式）
                     if (IsUIScript(compType))
                     {
@@ -270,33 +257,33 @@ namespace UGF.GameFramework.UI.Editor
                         Debug.Log($"组件 {compType.Name} 不是UI脚本类型");
                     }
                 }
-                
+
                 if (uiScriptComponent != null && uiScriptType != null)
                 {
                     Debug.Log($"找到UI脚本组件：{uiScriptType.Name}，开始还原设计状态");
-                    
+
                     // 设置UIDesigner的基本信息
                     designer.UIFormName = uiScriptType.Name;
                     designer.NamespaceName = uiScriptType.Namespace ?? "Game.UI";
-                    
+
                     // 直接从UI脚本组件实例获取已绑定的组件引用
                     List<UIComponentBinding> bindings = ExtractComponentBindingsFromScript(uiScriptComponent, uiScriptType);
                     designer.ComponentBindings = bindings;
-                    
+
                     // 为相关GameObject添加UIComponentBinder标记
                     AddComponentBindersToGameObjects(bindings);
-                    
+
                     Debug.Log($"成功还原设计状态，找到 {bindings.Count} 个组件绑定");
                 }
                 else
                 {
                     Debug.Log("未找到现有UI脚本，将创建新的设计");
-                    
+
                     // 设置默认值
                     designer.UIFormName = gameObject.name.Replace(" ", "").Replace("(", "").Replace(")", "");
                     if (!designer.UIFormName.EndsWith("UI"))
                         designer.UIFormName += "UI";
-                        
+
                     designer.NamespaceName = "Game.UI";
                     designer.ComponentBindings = new List<UIComponentBinding>();
                 }
@@ -306,7 +293,7 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.LogError($"还原设计状态时发生错误：{ex.Message}\n{ex.StackTrace}");
             }
         }
-        
+
         /// <summary>
         /// 判断是否是UI脚本类型
         /// </summary>
@@ -320,63 +307,63 @@ namespace UGF.GameFramework.UI.Editor
                     return true;
                 baseType = baseType.BaseType;
             }
-            
+
             // 检查命名模式（以UI结尾且在UI相关命名空间下）
             if (type.Name.EndsWith("UI") || type.Name.EndsWith("Form"))
             {
-                if (type.Namespace?.Contains("UI") == true || 
+                if (type.Namespace?.Contains("UI") == true ||
                     type.Namespace?.Contains("Game") == true ||
                     type.Namespace?.Contains("Examples") == true)
                     return true;
             }
-                
+
             return false;
         }
-        
+
         /// <summary>
         /// 直接从UI脚本组件实例提取已绑定的组件引用
         /// </summary>
         private static List<UIComponentBinding> ExtractComponentBindingsFromScript(Component scriptComponent, System.Type scriptType)
         {
             List<UIComponentBinding> bindings = new List<UIComponentBinding>();
-            
+
             try
             {
                 Debug.Log($"[ExtractComponentBindingsFromScript] 开始从脚本实例提取组件绑定：{scriptType.FullName}");
-                
+
                 // 获取所有字段（包括私有字段）
                 FieldInfo[] fields = scriptType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                 Debug.Log($"[ExtractComponentBindingsFromScript] 找到 {fields.Length} 个字段");
-                
+
                 foreach (FieldInfo field in fields)
                 {
                     Debug.Log($"[ExtractComponentBindingsFromScript] 检查字段：{field.Name}，类型：{field.FieldType.FullName}");
-                    
+
                     // 检查是否是UI组件类型
                     if (IsUIComponentType(field.FieldType))
                     {
                         Debug.Log($"[ExtractComponentBindingsFromScript] 字段 {field.Name} 是UI组件类型：{field.FieldType.Name}");
-                        
+
                         // 直接从脚本实例获取字段值（已绑定的组件引用）
                         Component fieldValue = field.GetValue(scriptComponent) as Component;
                         if (fieldValue != null)
                         {
                             Debug.Log($"[ExtractComponentBindingsFromScript] 字段 {field.Name} 已绑定到组件：{fieldValue.name} ({fieldValue.GetType().Name})");
-                            
+
                             UIComponentBinding binding = new UIComponentBinding
                             {
                                 ComponentName = field.Name,
                                 ComponentType = field.FieldType.Name,
                                 Component = fieldValue
                             };
-                            
+
                             bindings.Add(binding);
                             Debug.Log($"[ExtractComponentBindingsFromScript] 成功提取绑定：{field.Name} -> {fieldValue.name} ({fieldValue.GetType().Name})");
                         }
                         else
                         {
                             Debug.LogWarning($"[ExtractComponentBindingsFromScript] 字段 {field.Name} 的值为null，可能未绑定组件");
-                            
+
                             // 如果字段值为null，尝试通过名称查找作为备用方案
                             GameObject targetObject = FindGameObjectByFieldName(scriptComponent.gameObject, field.Name);
                             if (targetObject != null)
@@ -390,7 +377,7 @@ namespace UGF.GameFramework.UI.Editor
                                         ComponentType = field.FieldType.Name,
                                         Component = targetComponent
                                     };
-                                    
+
                                     bindings.Add(binding);
                                     Debug.Log($"[ExtractComponentBindingsFromScript] 备用方案成功：{field.Name} -> {targetObject.name} ({field.FieldType.Name})");
                                 }
@@ -402,43 +389,43 @@ namespace UGF.GameFramework.UI.Editor
                         Debug.Log($"[ExtractComponentBindingsFromScript] 字段 {field.Name} 不是UI组件类型");
                     }
                 }
-                
+
                 Debug.Log($"[ExtractComponentBindingsFromScript] 提取完成，共找到 {bindings.Count} 个组件绑定");
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"从脚本实例提取组件绑定时发生错误：{ex.Message}\n{ex.StackTrace}");
             }
-            
+
             return bindings;
         }
-        
+
         /// <summary>
         /// 解析脚本字段信息
         /// </summary>
         private static List<UIComponentBinding> ParseScriptFields(System.Type scriptType, GameObject rootObject)
         {
             List<UIComponentBinding> bindings = new List<UIComponentBinding>();
-            
+
             try
             {
                 // 获取所有字段
                 FieldInfo[] fields = scriptType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 Debug.Log($"[ParseScriptFields] 脚本类型：{scriptType.FullName}，找到 {fields.Length} 个字段");
-                
+
                 foreach (var field in fields)
                 {
                     Debug.Log($"[ParseScriptFields] 检查字段：{field.Name}，类型：{field.FieldType.FullName}");
-                    
+
                     // 跳过非UI组件字段
                     if (!IsUIComponentType(field.FieldType))
                     {
                         Debug.Log($"[ParseScriptFields] 字段 {field.Name} 不是UI组件类型，跳过");
                         continue;
                     }
-                    
+
                     Debug.Log($"[ParseScriptFields] 字段 {field.Name} 是UI组件类型，开始查找对应GameObject");
-                        
+
                     // 尝试在GameObject层次结构中找到对应的组件
                     GameObject targetObject = FindGameObjectByFieldName(rootObject, field.Name);
                     if (targetObject != null)
@@ -453,7 +440,7 @@ namespace UGF.GameFramework.UI.Editor
                                 ComponentType = field.FieldType.Name,
                                 Component = targetComponent
                             };
-                            
+
                             bindings.Add(binding);
                             Debug.Log($"[ParseScriptFields] 成功创建绑定：{field.Name} -> {targetObject.name} ({field.FieldType.Name})");
                         }
@@ -467,17 +454,17 @@ namespace UGF.GameFramework.UI.Editor
                         Debug.LogWarning($"[ParseScriptFields] 没有找到字段 {field.Name} 对应的GameObject");
                     }
                 }
-                
+
                 Debug.Log($"[ParseScriptFields] 解析完成，共找到 {bindings.Count} 个组件绑定");
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"解析脚本字段时发生错误：{ex.Message}\n{ex.StackTrace}");
             }
-            
+
             return bindings;
         }
-        
+
         /// <summary>
         /// 判断是否是UI组件类型
         /// </summary>
@@ -489,10 +476,10 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.Log($"[IsUIComponentType] {type.FullName} 不继承自Component");
                 return false;
             }
-            
+
             // 添加更多UI组件类型的检查
             bool isUIType = false;
-            
+
             // 检查是否继承自Graphic（Text、Image、RawImage等）
             if (typeof(UnityEngine.UI.Graphic).IsAssignableFrom(type))
             {
@@ -521,22 +508,22 @@ namespace UGF.GameFramework.UI.Editor
             {
                 Debug.Log($"[IsUIComponentType] {type.FullName} 不是UI组件类型");
             }
-                           
+
             Debug.Log($"[IsUIComponentType] 最终结果：{type.FullName} 是UI组件类型：{isUIType}");
             return isUIType;
         }
-        
+
         /// <summary>
         /// 根据字段名查找GameObject
         /// </summary>
         private static GameObject FindGameObjectByFieldName(GameObject root, string fieldName)
         {
             Debug.Log($"[FindGameObjectByFieldName] 开始查找字段 '{fieldName}' 对应的GameObject，根对象：{root.name}");
-            
+
             // 生成多种可能的名称变体
             List<string> nameVariants = GenerateNameVariants(fieldName);
             Debug.Log($"[FindGameObjectByFieldName] 生成的名称变体：{string.Join(", ", nameVariants)}");
-            
+
             // 首先尝试直接子对象匹配
             foreach (string variant in nameVariants)
             {
@@ -548,11 +535,11 @@ namespace UGF.GameFramework.UI.Editor
                     return found.gameObject;
                 }
             }
-                
+
             // 递归搜索所有子对象
             Debug.Log($"[FindGameObjectByFieldName] 开始递归搜索所有子对象");
             GameObject result = FindGameObjectRecursive(root.transform, nameVariants);
-            
+
             if (result != null)
             {
                 Debug.Log($"[FindGameObjectByFieldName] 递归搜索成功：找到 {result.name}");
@@ -564,20 +551,20 @@ namespace UGF.GameFramework.UI.Editor
                 Debug.Log($"[FindGameObjectByFieldName] 根对象 '{root.name}' 的所有子对象：");
                 LogAllChildren(root.transform, 0);
             }
-            
+
             return result;
         }
-        
+
         /// <summary>
         /// 生成字段名的各种可能变体
         /// </summary>
         private static List<string> GenerateNameVariants(string fieldName)
         {
             List<string> variants = new List<string>();
-            
+
             // 原始名称
             variants.Add(fieldName);
-            
+
             // 移除常见前缀（btn, img, txt, lbl等）
             if (fieldName.Length > 3)
             {
@@ -586,7 +573,7 @@ namespace UGF.GameFramework.UI.Editor
                 {
                     string withoutPrefix = fieldName.Substring(3);
                     variants.Add(withoutPrefix);
-                    
+
                     // 首字母小写版本
                     if (withoutPrefix.Length > 0)
                     {
@@ -594,7 +581,7 @@ namespace UGF.GameFramework.UI.Editor
                     }
                 }
             }
-            
+
             // 移除常见后缀（Button, Text, Image等）
             string[] suffixes = { "Button", "Text", "Image", "Label", "Input", "Toggle", "Slider" };
             foreach (string suffix in suffixes)
@@ -608,20 +595,20 @@ namespace UGF.GameFramework.UI.Editor
                     }
                 }
             }
-            
+
             // 首字母大写版本
             if (fieldName.Length > 0)
             {
                 variants.Add(char.ToUpper(fieldName[0]) + fieldName.Substring(1));
             }
-            
+
             // 全小写版本
             variants.Add(fieldName.ToLower());
-            
+
             // 移除重复项
             return variants.Distinct().ToList();
         }
-        
+
         /// <summary>
         /// 递归查找GameObject
         /// </summary>
@@ -630,7 +617,7 @@ namespace UGF.GameFramework.UI.Editor
             foreach (Transform child in parent)
             {
                 Debug.Log($"[FindGameObjectRecursive] 检查子对象：'{child.name}'");
-                
+
                 // 检查是否匹配任何一个名称变体
                 foreach (string variant in nameVariants)
                 {
@@ -640,16 +627,16 @@ namespace UGF.GameFramework.UI.Editor
                         return child.gameObject;
                     }
                 }
-                
+
                 // 递归搜索子对象
                 GameObject found = FindGameObjectRecursive(child, nameVariants);
                 if (found != null)
                     return found;
             }
-            
+
             return null;
         }
-        
+
         /// <summary>
         /// 输出所有子对象的名称（用于调试）
         /// </summary>
@@ -665,7 +652,7 @@ namespace UGF.GameFramework.UI.Editor
                 }
             }
         }
-        
+
         /// <summary>
         /// 为GameObject添加UIComponentBinder标记
         /// </summary>
